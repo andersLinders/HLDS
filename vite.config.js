@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
-  base: process.env.GITHUB_PAGES ? "/haus-labs-discovery-set/" : "/",
+  base: process.env.GITHUB_PAGES ? "/HLDS/" : "/",
   plugins: [react()],
   server: {
     port: 5173,
