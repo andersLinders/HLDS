@@ -13,20 +13,98 @@
   color: #f3f3f3;
 }
 
+.phone-col {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  width: var(--canvas-w);
+}
+
+.studio.is-desk {
+  justify-content: flex-start;
+  overflow: auto;
+}
+
 .phone-screen {
   flex: 0 0 auto;
-  width: 389px;
-  height: min(844px, calc(100dvh - 72px));
-  overflow: auto;
-  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: min(var(--canvas-h), calc(100dvh - 128px));
+  overflow: hidden;
   background: #fff;
   color: #000;
   position: relative;
   transform: translateZ(0);
+}
+
+.flow-pickers {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 12px;
+}
+
+.flow-picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+
+.flow-picker select {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 32px;
+  min-width: 0;
+  flex: 1;
+  max-width: 168px;
+  padding: 0 34px 0 14px;
+  border: 1px solid var(--studio-line);
+  border-radius: 100px;
+  background-color: #161616;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #fff 50%),
+    linear-gradient(135deg, #fff 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) 13px,
+    calc(100% - 11px) 13px;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  color: #fff;
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 0.2px;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.flow-picker select:focus {
+  outline: 1px solid rgba(255, 255, 255, 0.35);
+  outline-offset: 2px;
+}
+
+.page {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overflow-x: clip;
   scrollbar-width: none;
 }
 
-.phone-screen::-webkit-scrollbar {
+.phone-screen > .gift-flow,
+.view-root > .gift-flow {
+  height: 100%;
+}
+
+.page::-webkit-scrollbar {
   display: none;
 }
 
@@ -218,11 +296,44 @@
     color: #000;
   }
 
+  .phone-col {
+    width: 100%;
+    max-width: none;
+  }
+
+  .flow-pickers {
+    margin: 0;
+    padding: 10px 16px;
+    background: #fff;
+    border-bottom: 1px solid #ececec;
+    flex-wrap: wrap;
+  }
+
+  .flow-picker {
+    color: #000;
+  }
+
   .phone-screen {
+    display: block;
     width: 100%;
     height: auto;
     overflow: visible;
     transform: none;
+  }
+
+  .flow-picker select {
+    background-color: #f4f4f4;
+    background-image:
+      linear-gradient(45deg, transparent 50%, #000 50%),
+      linear-gradient(135deg, #000 50%, transparent 50%);
+    color: #000;
+    border-color: #e0e0e0;
+  }
+
+  .page {
+    flex: none;
+    min-height: 0;
+    overflow: visible;
   }
 
   .dev-panel {

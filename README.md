@@ -5,7 +5,7 @@ A pixel-faithful prototype of the Haus Labs Foundation & Brush Discovery Set pag
 - Live: [https://anderslinders.github.io/HLDS/](https://anderslinders.github.io/HLDS/)
 - Local: `npm install` then `npm run dev` → [http://localhost:5173/](http://localhost:5173/)
 
-On viewports **901px and wider**, the page sits in a 389px canvas with the Motion desk beside it. Below 900px, the desk is hidden and the page fills the screen.
+On viewports **901px and wider**, the page sits in a 393×852 canvas with the Motion desk beside it. Below 900px, the desk is hidden and the page fills the screen.
 
 **1.00× is the designed timing.** Drag a dial up to raise the value, down to lower it. Settings persist in the browser.
 

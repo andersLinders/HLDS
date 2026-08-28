@@ -1,7 +1,19 @@
-import { useEffect, useRef, useState } from "react";
-import DevStage from "./DevStage.jsx";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import DevStage, { useGiftVariant, useViewport } from "./DevStage.jsx";
+import GiftFlow from "./GiftFlow.jsx";
 
 const asset = (file) => `${import.meta.env.BASE_URL}assets/${file}`;
+
+function reducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function motionMs(base) {
+  const root = getComputedStyle(document.documentElement);
+  const speed = Number.parseFloat(root.getPropertyValue("--speed")) || 1;
+  const ui = Number.parseFloat(root.getPropertyValue("--ui")) || 1;
+  return base / speed / ui;
+}
 
 const FAQS = [
   {
@@ -67,6 +79,20 @@ function SplitCta() {
   );
 }
 
+function Atb({ onStart }) {
+  return (
+    <footer className="atb">
+      <div className="atb-row">
+        <p className="atb-name">Foundation Discovery Gift Set with Redeem Code</p>
+        <p className="atb-price">$92</p>
+      </div>
+      <button className="atb-cta" type="button" onClick={onStart}>
+        Start gifting
+      </button>
+    </footer>
+  );
+}
+
 function Icon({ src, alt = "", className }) {
   return (
     <span className={className}>
@@ -75,15 +101,39 @@ function Icon({ src, alt = "", className }) {
   );
 }
 
+function getScrollRoot() {
+  return window.matchMedia("(min-width: 901px)").matches
+    ? document.querySelector(".page")
+    : null;
+}
+
 export default function App() {
+  return (
+    <DevStage>
+      <AppScreen />
+    </DevStage>
+  );
+}
+
+function AppScreen() {
+  const variant = useGiftVariant();
+  const viewport = useViewport();
   const [openFaq, setOpenFaq] = useState(2);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [navHidden, setNavHidden] = useState(false);
+  const [gifting, setGifting] = useState(false);
+  const [homeOut, setHomeOut] = useState(false);
+  const [homeIn, setHomeIn] = useState(false);
+  const [homeInPlay, setHomeInPlay] = useState(false);
   const pageRef = useRef(null);
+  const lastTopRef = useRef(0);
 
   useEffect(() => {
-    const screen = document.querySelector(".phone-screen");
+    if (gifting) return;
+
+    const screen = getScrollRoot();
     const nodes = document.querySelectorAll(".reveal");
     const io = new IntersectionObserver(
       (entries) => {
@@ -110,6 +160,15 @@ export default function App() {
       document.documentElement.style.setProperty("--progress", String(Math.min(1, top / max)));
       setScrolled(top > 4);
 
+      const last = lastTopRef.current;
+      lastTopRef.current = top;
+      setNavHidden((hidden) => {
+        if (top < 12) return false;
+        if (top > last + 6) return true;
+        if (top < last - 2) return false;
+        return hidden;
+      });
+
       const strength = readParallax();
       const hero = document.querySelector(".hero");
       const arnica = document.querySelector(".ingredients");
@@ -118,6 +177,15 @@ export default function App() {
       if (hero) {
         const localTop = hero.getBoundingClientRect().top - rootBox.top;
         hero.style.setProperty("--hero-shift", `${Math.round(localTop * -0.12 * strength)}px`);
+        const product = hero.querySelector(".hero-product");
+        if (product) {
+          const range = Math.max(1, hero.offsetHeight * 0.85);
+          const t = reducedMotion() ? 0 : Math.min(1, Math.max(0, top / range));
+          const scale = 1 + t * 0.12;
+          const lift = t * -18;
+          product.style.setProperty("--hero-scale", scale.toFixed(4));
+          product.style.setProperty("--hero-lift", `${lift.toFixed(2)}px`);
+        }
       }
       if (arnica) {
         const localTop = arnica.getBoundingClientRect().top - rootBox.top;
@@ -139,11 +207,11 @@ export default function App() {
       io.disconnect();
       target.removeEventListener("scroll", onScroll);
     };
-  }, []);
+  }, [gifting]);
 
   useEffect(() => {
-    const screen = document.querySelector(".phone-screen");
-    if (screen && window.matchMedia("(min-width: 901px)").matches) {
+    const screen = getScrollRoot();
+    if (screen) {
       screen.style.overflow = menuOpen || searchOpen ? "hidden" : "auto";
       document.body.style.overflow = "";
     } else {
@@ -151,10 +219,64 @@ export default function App() {
     }
   }, [menuOpen, searchOpen]);
 
+  useEffect(() => {
+    if (!homeOut || gifting) return;
+    const timer = setTimeout(() => setGifting(true), motionMs(320));
+    return () => clearTimeout(timer);
+  }, [homeOut, gifting]);
+
+  useLayoutEffect(() => {
+    if (!homeIn || homeInPlay) return;
+    const frame = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setHomeInPlay(true));
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [homeIn, homeInPlay]);
+
+  useEffect(() => {
+    if (!homeInPlay) return;
+    const timer = setTimeout(() => {
+      setHomeIn(false);
+      setHomeInPlay(false);
+    }, motionMs(400) + 40);
+    return () => clearTimeout(timer);
+  }, [homeInPlay]);
+
+  const startGifting = () => {
+    if (gifting || homeOut) return;
+    if (reducedMotion()) {
+      setGifting(true);
+      return;
+    }
+    setHomeOut(true);
+  };
+
+  const leaveGifting = () => {
+    setGifting(false);
+    setHomeOut(false);
+    if (reducedMotion()) return;
+    setHomeIn(true);
+    setHomeInPlay(false);
+  };
+
+  const viewClass = [
+    "view-root",
+    viewport === "desktop" ? "is-desktop" : "",
+    homeOut && !gifting ? "is-home-out" : "",
+    homeIn ? "is-home-in" : "",
+    homeInPlay ? "is-home-in-play" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <DevStage>
+    <div className={viewClass}>
+    {gifting ? (
+      <GiftFlow key={`${variant}-${viewport}`} variant={variant} viewport={viewport} onExit={leaveGifting} />
+    ) : (
+    <>
     <div className="page" ref={pageRef}>
-      <header className={`topbar${scrolled ? " is-scrolled" : ""}`}>
+      <header className={`topbar${scrolled ? " is-scrolled" : ""}${navHidden && !menuOpen && !searchOpen ? " is-hidden" : ""}`}>
         <div className="announcement">
           <p>Shop our latest innovations</p>
         </div>
@@ -183,6 +305,7 @@ export default function App() {
       </header>
 
       <section className="hero" id="top">
+        <div className="hero-main">
         <div className="hero-copy">
           <p className="eyebrow reveal d1">‘tis the season</p>
           <h1 className="hero-title reveal d2">Gift the perfect match</h1>
@@ -207,13 +330,14 @@ export default function App() {
           </div>
         </div>
 
-        <div className="hero-product reveal">
-          <img src={asset("hero-gift.png")} alt="Foundation & Brush Discovery Set gift box" />
-        </div>
-
         <div className="hero-cta reveal d5">
           <p className="price">$92 - SHIPPED IN A GIFT BOX</p>
           <SplitCta />
+        </div>
+        </div>
+
+        <div className="hero-product reveal">
+          <img src={asset("hero-gift.png")} alt="Foundation & Brush Discovery Set gift box" />
         </div>
       </section>
 
@@ -246,9 +370,6 @@ export default function App() {
               <p className="product-desc">
                 Choose a full bottle if you know their shade or a discovery set for them to try before redeeming their perfect match.
               </p>
-            </div>
-            <div className="reveal">
-              <SplitCta />
             </div>
           </div>
 
@@ -391,6 +512,9 @@ export default function App() {
         </div>
       </div>
     </div>
-    </DevStage>
+    <Atb onStart={startGifting} />
+    </>
+    )}
+    </div>
   );
 }
